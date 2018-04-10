@@ -13,7 +13,7 @@
 
 #define DEBUG 1
 #define DEVICE "D1-Mini-Wi-Fi-RGBW-LED"
-#define VERSION "1.0.0"
+#define VERSION "1.0.1"
 #define MAX_REMOTE_CLIENTS 2
 #define TMR_COUNT 326
 #define TCP_PORT 23
@@ -56,6 +56,8 @@ void ICACHE_RAM_ATTR pwmHandler (void){
   timer0_write(ESP.getCycleCount() + TMR_COUNT);
 }
 
+char* urlDecode(char* data, uint8_t sender=255);
+
 void setup() {
   for(uint8_t i=0; i<sizeof(channels); i++) {
     pinMode(channels[i], OUTPUT);
@@ -77,7 +79,7 @@ void loop() {
   uint8_t i;
   //Check for connection attempts
   if (server.hasClient()){
-    for(i = 0; i < MAX_REMOTE_CLIENTS; i++){
+    for(i = 0; i < MAX_REMOTE_CLIENTS; i++) {
       if (!server_clients[i] || !server_clients[i].connected()){
         if(server_clients[i]) server_clients[i].stop();
         server_clients[i] = server.available();
@@ -93,8 +95,8 @@ void loop() {
     }
   }
   //Check TCP/IP for data
-  for(i = 0; i < MAX_REMOTE_CLIENTS; i++){
-    if (server_clients[i] && server_clients[i].connected()){
+  for(i = 0; i < MAX_REMOTE_CLIENTS; i++) {
+    if(server_clients[i] && server_clients[i].connected()){
       if(server_clients[i].available()){
         while(server_clients[i].available()) {
           byte incoming = server_clients[i].read();
@@ -212,16 +214,21 @@ void parseCommand(uint8_t sender) {
         }
       } else {
         ++separator;
+        separator = urlDecode(separator);
         if(strcmp("ssid", command) == 0) {
           strcpy(ssid, separator);
-          if(sender == 255) Serial.println("New SSID set");
-          if(sender < sizeof(server_clients)) 
+          if(sender == 255) {
+            Serial.print("New SSID set to "); Serial.println(ssid); 
+          }
+          if(sender < sizeof(server_clients)) {
             server_clients[sender].print("SSID="); server_clients[sender].println(ssid); 
+          }
         } else if(strcmp("password", command) == 0) {
           strcpy(password, separator);
-          if(sender == 255) Serial.println("New password set");
-          if(sender < sizeof(server_clients)) 
+          if(sender == 255) Serial.print("New password set to "); Serial.println(password); 
+          if(sender < sizeof(server_clients)) {
             server_clients[sender].print("PASSWORD="); server_clients[sender].println(password);
+          }
         } else {
           Serial.println("Unknown command!");
           if(sender < sizeof(server_clients)) 
@@ -357,4 +364,37 @@ void tcpPrintLn(String ln) {
   }
 }
 
+char* urlDecode(char* data, uint8_t sender) {
+  char *unparsed = data;
+  char *parsed = unparsed;
+  while (*unparsed) {
+    if (*unparsed == 0x25) {
+      unparsed++;
+      char high_nibble = *unparsed;
+      unparsed++;
+      char low_nibble = *unparsed;
+      if(high_nibble >= 0x61 && high_nibble <= 0x66) high_nibble -= 32;
+      if(low_nibble >= 0x61 && low_nibble <= 0x66) low_nibble -= 32;
+      if(high_nibble < 0x30 || high_nibble > 70 || (high_nibble > 0x39 && high_nibble < 0x41) || low_nibble < 0x30 || low_nibble > 70 || (low_nibble > 0x39 && low_nibble < 0x41)) {
+        if(sender == 255)
+          Serial.println("Error in URL decoding");
+        else if(sender < sizeof(server_clients))
+          server_clients[sender].println("ERROR=URL_DECODE_ERROR");
+        *parsed = 0;
+        return data;
+      }
+      if (high_nibble > 0x39) high_nibble -= 7;
+      high_nibble &= 0x0f;
+      if (low_nibble > 0x39) low_nibble -= 7;
+      low_nibble &= 0x0f;
+      *parsed = (high_nibble << 4) | low_nibble;
+    } else {
+      *parsed = *unparsed;
+    }
+    unparsed++;
+    parsed++;
+  }
+  *parsed = 0;
+  return data;
+}
 

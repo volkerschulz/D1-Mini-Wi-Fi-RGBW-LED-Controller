@@ -13,7 +13,7 @@
 
 #define DEBUG 1
 #define DEVICE "D1-Mini-Wi-Fi-RGBW-LED"
-#define VERSION "1.0.1"
+#define VERSION "1.0.2"
 #define MAX_REMOTE_CLIENTS 2
 #define TMR_COUNT 326
 #define TCP_PORT 23
@@ -389,7 +389,10 @@ char* urlDecode(char* data, uint8_t sender) {
       low_nibble &= 0x0f;
       *parsed = (high_nibble << 4) | low_nibble;
     } else {
-      *parsed = *unparsed;
+      if(*unparsed == 0x2b)
+        *parsed = 0x20;
+      else
+        *parsed = *unparsed;
     }
     unparsed++;
     parsed++;

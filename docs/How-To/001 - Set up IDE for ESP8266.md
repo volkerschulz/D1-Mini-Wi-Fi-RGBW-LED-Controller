@@ -11,4 +11,4 @@ If you've never before used your Arduino IDE to flash a D1 Mini (or any other ES
 6. Hit "Close" to close the Boards Manager.
 7. Restart your IDE.
 
-That's it. Next you want to [Get your D1 Mini up and running](002 - Get your D1 Mini up and running.md).
+That's it. Next you want to [Get your D1 Mini up and running](./002%20-%20Get%20your%20D1%20Mini%20up%20and%20running.md).

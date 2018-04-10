@@ -1,6 +1,8 @@
 How-to...
 # Get your D1 Mini up and running
 
+First: Make sure you [Set up your Arduino IDE for ESP8266 boards](./001%20-%20Set%20up%20IDE%20for%20ESP8266.md)
+
 The D1 Mini uses the CH341 chipset for serial over USB communication. If you've never before connected a device using this particular chipset, you might have to install drivers first by following these steps for your operating system:
 
 ### Windows
